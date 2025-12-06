@@ -34,4 +34,12 @@ EOF
 cd ~/Documents/Dev/Projects/AetherQuery
 source venv/bin/activate
 uvicorn backend.main:app --reload
+
+
+table_ec879a2297fe4504bdc4869239471662
+
+import duckdb
+con = duckdb.connect()
+
+print(con.execute("EXPLAIN SELECT AVG(salary) FROM table_ec879a2297fe4504bdc4869239471662").fetchall())
 """

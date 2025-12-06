@@ -1,18 +1,30 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from backend.duckdb_engine import get_connection
+import re
 
 router = APIRouter()
 
 class QueryRequest(BaseModel):
     query: str
 
+
 @router.post("/parse-plan")
 async def parse_plan(req: QueryRequest):
     conn = get_connection()
-    raw_plan_rows = conn.execute(f"EXPLAIN {req.query}").fetchall()
-    raw_plan = "\n".join(row[0] for row in raw_plan_rows)
-    parsed_tree = parse_explain_plan(raw_plan)
+
+    # Run normal EXPLAIN (ASCII art)
+    rows = conn.execute(f"EXPLAIN {req.query}").fetchall()
+
+    # Column 1 contains each line of the plan
+    explain_lines = [r[1] for r in rows]
+
+    # Clean entire plan
+    cleaned = clean_explain_output("\n".join(explain_lines))
+
+    # Parse meaning, not indentation
+    parsed_tree = build_operator_tree(cleaned)
+
     explanation = explain_tree(parsed_tree)
 
     return {
@@ -21,88 +33,124 @@ async def parse_plan(req: QueryRequest):
         "explanation": explanation
     }
 
-def parse_explain_plan(text: str):
-    """
-    Converts ASCII tree text into structured JSON.
-    Very lightweight indentation-based parser.
-    """
 
-    lines = text.split("\n")
+# -------------------------------------------------------------
+# CLEAN OUTPUT — remove ASCII art, keep only meaning
+# -------------------------------------------------------------
 
-    stack = []
-    root = None
+def clean_explain_output(text: str):
+    cleaned = []
+    for line in text.split("\n"):
 
-    for line in lines:
-        stripped = line.lstrip()
-        indent = len(line) - len(stripped)
+        # Remove box characters
+        for ch in ["┌", "┐", "└", "┘", "│", "─", "┬", "┴"]:
+            line = line.replace(ch, "")
 
-        node = create_node_from_line(stripped)
-
-        if not stack:
-            root = node
-            stack.append((indent, node))
+        line = line.strip()
+        if not line:
             continue
 
-        # find parent based on indent
-        while stack and stack[-1][0] >= indent:
-            stack.pop()
+        cleaned.append(line)
 
-        parent_indent, parent_node = stack[-1]
-        parent_node["children"].append(node)
-
-        stack.append((indent, node))
-
-    return root
+    return cleaned
 
 
-def create_node_from_line(line: str):
-    """
-    Converts a single EXPLAIN line to a node.
-    """
+# -------------------------------------------------------------
+# OPERATOR TREE BUILDER (content-based, NOT indent-based)
+# -------------------------------------------------------------
 
-    node = {
-        "type": None,
+def build_operator_tree(lines):
+
+    ops = []
+    current = None
+
+    for line in lines:
+
+        # Detect main operator
+        if "UNGROUPED_AGGREGATE" in line:
+            current = make_node("UNGROUPED_AGGREGATE")
+            ops.append(current)
+
+        elif "PROJECTION" in line:
+            current = make_node("PROJECTION")
+            ops.append(current)
+
+        elif "SEQ_SCAN" in line:
+            current = make_node("SEQ_SCAN")
+            ops.append(current)
+
+        elif "READ_CSV_AUTO" in line:
+            current = make_node("READ_CSV_AUTO")
+            ops.append(current)
+
+        # Attach aggregates
+        if "Aggregates:" in line:
+            aggs = line.replace("Aggregates:", "").strip()
+            current["aggregates"] = [aggs]
+
+        # Attach projections / columns
+        if "salary" in line.lower():
+            current["columns"].append("salary")
+
+        # Attach row count
+        if "~" in line and "rows" in line:
+            num = line.split("~")[1].split("rows")[0].strip()
+            current["rows"] = int(num)
+
+    # Build tree manually: Agg → Projection → Scan
+    return assemble_tree(ops)
+
+
+def make_node(op):
+    return {
+        "type": op,
         "columns": [],
         "aggregates": [],
         "rows": None,
         "children": []
     }
 
-    # Detect operator type
-    node["type"] = line.split()[0]
 
-    # Detect aggregates
-    if "Aggregates:" in line:
-        agg = line.split("Aggregates:")[1].strip()
-        node["aggregates"] = [agg]
+def assemble_tree(nodes):
 
-    # Detect projections
-    if "Projections:" in line:
-        cols = line.split("Projections:")[1].strip().split(",")
-        node["columns"] = [c.strip() for c in cols]
+    root = None
+    last_proj = None
 
-    # Detect row count
-    if "~" in line and "rows" in line:
-        num = line.split("~")[1].split("rows")[0].strip()
-        node["rows"] = int(num)
+    for n in nodes:
 
-    return node
+        if n["type"] == "UNGROUPED_AGGREGATE":
+            root = n
 
+        elif n["type"] == "PROJECTION":
+            if root:
+                root["children"].append(n)
+            last_proj = n
+
+        elif n["type"] in ("SEQ_SCAN", "READ_CSV_AUTO"):
+            if last_proj:
+                last_proj["children"].append(n)
+
+    return root
+
+
+# -------------------------------------------------------------
+# NATURAL LANGUAGE EXPLANATION
+# -------------------------------------------------------------
 
 def explain_tree(node):
-    """
-    Generates a natural-language explanation.
-    """
+
+    if not node:
+        return "Could not parse query plan."
+
     t = node["type"]
 
-    if t == "READ_CSV_AUTO":
-        return "Reads the CSV file from disk."
+    if t == "UNGROUPED_AGGREGATE":
+        return f"Computes aggregate: {', '.join(node['aggregates'])}."
 
     if t == "PROJECTION":
         return f"Selects columns: {', '.join(node['columns'])}."
 
-    if t == "UNGROUPED_AGGREGATE":
-        return f"Applies aggregate functions: {', '.join(node['aggregates'])}."
+    if t == "SEQ_SCAN":
+        return f"Sequential scan over table (~{node['rows']} rows)."
 
-    # Default fallback
     return f"Executes operator: {t}."
