@@ -12,4 +12,4 @@ async def preview_table(table_name: str, limit: int = 50):
     return {
         "columns": columns,
         "rows": rows
-    } 
+    }
