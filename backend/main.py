@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from backend.routers import upload, schema, preview, stats, sql, plan
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
@@ -13,6 +14,15 @@ app.include_router(plan.router, prefix="/api/sql")
 @app.get("/")
 def root():
     return{"msg": "AetherQuery backend is running"}
+
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 
