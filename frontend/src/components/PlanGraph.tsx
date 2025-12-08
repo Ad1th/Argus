@@ -1,79 +1,60 @@
 import React, { useCallback } from "react";
-import ReactFlow, {
-  Background,
-  Controls,
-  MiniMap,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-} from "reactflow";
-
+import ReactFlow, { Background, Controls, MiniMap } from "reactflow";
 import "reactflow/dist/style.css";
 
-// Convert your plan JSON into graph nodes & edges
-function buildGraph(plan: any) {
-  const nodes: any[] = [];
-  const edges: any[] = [];
+interface NodeType {
+  type: string;
+  columns?: string[];
+  aggregates?: string[];
+  children?: NodeType[];
+}
 
-  function dfs(node: any, parentId: string | null, depth = 0, index = 0) {
-    const nodeId = `${node.type}-${Math.random().toString(36).slice(2, 8)}`;
+function PlanGraph({ plan }: { plan: NodeType }) {
+  let nodes: any[] = [];
+  let edges: any[] = [];
+
+  let idCounter = 1;
+
+  const dfs = (node: NodeType, parentId: string | null): string => {
+    const id = `n${idCounter++}`;
 
     nodes.push({
-      id: nodeId,
+      id,
+      position: { x: Math.random() * 600, y: Math.random() * 600 },
       data: { label: node.type },
-      position: { x: depth * 250, y: index * 120 },
       style: {
         padding: 10,
-        borderRadius: 8,
+        border: "1px solid #ddd",
+        borderRadius: 5,
         background: "#222",
         color: "white",
-        border: "1px solid #555",
       },
     });
 
     if (parentId) {
       edges.push({
-        id: `e-${parentId}-${nodeId}`,
+        id: `e-${parentId}-${id}`,
         source: parentId,
-        target: nodeId,
+        target: id,
       });
     }
 
-    // recursively go through children
-    node.children?.forEach((child: any, i: number) => {
-      dfs(child, nodeId, depth + 1, i);
-    });
-  }
+    if (node.children) {
+      node.children.forEach((child: NodeType) => dfs(child, id));
+    }
+
+    return id;
+  };
 
   dfs(plan, null);
-  return { nodes, edges };
-}
-
-export default function PlanGraph({ plan }: { plan: any }) {
-  const { nodes: initialNodes, edges: initialEdges } = buildGraph(plan);
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
-  const onConnect = useCallback(
-    (params: any) => setEdges((eds) => addEdge(params, eds)),
-    []
-  );
 
   return (
-    <div style={{ width: "100%", height: "100%" }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        fitView
-      >
-        <Background />
-        <Controls />
-        <MiniMap />
-      </ReactFlow>
-    </div>
+    <ReactFlow nodes={nodes} edges={edges} fitView>
+      <Background />
+      <MiniMap />
+      <Controls />
+    </ReactFlow>
   );
 }
+
+export default PlanGraph;
