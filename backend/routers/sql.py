@@ -81,7 +81,7 @@ async def analyze_query(req: QueryRequest):
     conn = get_connection()
 
     try:
-        rows = conn.execute(f"EXPLAIN_verbose {req.query}").fetchall()
+        rows = conn.execute(f"EXPLAIN ANALYZE {req.query}").fetchall()
 
         # DuckDB 0.9.2 returns: (plan_type, plan_text)
         plan_text = rows[0][1]
