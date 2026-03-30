@@ -15,7 +15,7 @@ app.include_router(execute_router, prefix="/api/sql")
 
 @app.get("/")
 def root():
-    return {"msg": "AetherQuery backend is running"}
+    return {"msg": "Argus backend is running"}
 
 # --- CORS ---
 app.add_middleware(
@@ -41,7 +41,7 @@ EOF
 """
 
 """
-cd ~/Documents/Dev/Projects/AetherQuery
+cd ~/Documents/Dev/Projects/Argus
 source venv/bin/activate
 uvicorn backend.main:app --reload
 

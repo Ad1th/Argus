@@ -1,6 +1,6 @@
-# AetherQuery
+# Argus
 
-AetherQuery is a local full-stack app that turns CSV files into queryable DuckDB views, then helps you run SQL and visualize execution plans in an interactive React UI.
+Argus is a local full-stack app that turns CSV files into queryable DuckDB views, then helps you run SQL and visualize execution plans in an interactive React UI.
 
 ## One-Line GitHub Description
 
@@ -8,7 +8,7 @@ Upload CSVs, run SQL on in-memory DuckDB, and visualize query execution plans th
 
 ## What It Does
 
-AetherQuery lets you:
+Argus lets you:
 
 - Upload a CSV file and register it as a DuckDB view.
 - Inspect schema and preview data.
@@ -59,7 +59,7 @@ Note: DuckDB is currently in-memory (`:memory:`), so uploaded tables reset when 
 
 ```bash
 git clone <your-repo-url>
-cd AetherQuery
+cd Argus
 ```
 
 ### 2. Start the backend
