@@ -83,7 +83,7 @@ function App() {
         minHeight: "100vh",
       }}
     >
-      <h1>AetherQuery — Plan Visualizer</h1>
+      <h1>Argus — Plan Visualizer</h1>
 
       {/* ---------------- Upload CSV ---------------- */}
       <div style={{ marginTop: "20px", marginBottom: "20px" }}>
