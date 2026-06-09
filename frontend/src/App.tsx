@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import PlanGraph from "./components/PlanGraph";
+
+const backend = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 function App() {
   const [tableName, setTableName] = useState<string | null>(null);
@@ -7,8 +9,6 @@ function App() {
   const [plan, setPlan] = useState<any | null>(null);
   const [result, setResult] = useState<any | null>(null);
   const [suggestedQueries, setSuggestedQueries] = useState<string[]>([]);
-
-  const backend = "http://127.0.0.1:8000";
 
   // -----------------------
   // Upload CSV Handler

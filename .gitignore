@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# Environment
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/settings.json
+
+# Rust
+target/
+Cargo.lock
+
+# Logs
+*.log
+
+# Generated data
+uploads/
+tmp/
+data/
+*.db
+*.duckdb

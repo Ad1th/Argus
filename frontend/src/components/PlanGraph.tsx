@@ -1,4 +1,3 @@
-import React, { useCallback } from "react";
 import ReactFlow, { Background, Controls, MiniMap } from "reactflow";
 import "reactflow/dist/style.css";
 
@@ -20,7 +19,7 @@ function PlanGraph({ plan }: { plan: NodeType }) {
 
     nodes.push({
       id,
-      position: { x: Math.random() * 600, y: Math.random() * 600 },
+      position: { x: (idCounter % 3) * 260, y: idCounter * 90 },
       data: { label: node.type },
       style: {
         padding: 10,

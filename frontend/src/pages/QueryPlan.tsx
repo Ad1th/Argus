@@ -1,22 +1,21 @@
 import { useState } from "react";
 import PlanGraph from "../components/PlanGraph";
-import { planToFlow } from "../utils/planToFlow";
+
+const backend = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 export default function QueryPlanPage() {
   const [query, setQuery] = useState("");
-  const [flow, setFlow] = useState(null);
+  const [plan, setPlan] = useState(null);
 
   async function analyzeQuery() {
-    const res = await fetch("http://localhost:8000/api/sql/parse-plan", {
+    const res = await fetch(`${backend}/api/sql/parse-plan`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query }),
     });
 
     const data = await res.json();
-    const { nodes, edges } = planToFlow(data.plan_tree);
-
-    setFlow({ nodes, edges });
+    setPlan(data.plan_tree ?? null);
   }
 
   return (
@@ -34,7 +33,11 @@ export default function QueryPlanPage() {
         Analyze Query
       </button>
 
-      {flow && <PlanGraph nodes={flow.nodes} edges={flow.edges} />}
+      {plan && (
+        <div style={{ height: 500, marginTop: 20 }}>
+          <PlanGraph plan={plan} />
+        </div>
+      )}
     </div>
   );
 }
