@@ -1,10 +1,10 @@
 # Argus
 
-Argus is a local full-stack app that turns CSV files into queryable DuckDB views, then helps you run SQL and visualize execution plans in an interactive React UI.
+Argus is a local full-stack app that turns CSV files into queryable DuckDB tables, then helps you run SQL and visualize execution plans in an interactive React UI. The primary backend is implemented in Rust, while the original Python implementation is retained for reference and compatibility.
 
 ## One-Line GitHub Description
 
-Upload CSVs, run SQL on in-memory DuckDB, and visualize query execution plans through a FastAPI + React interface.
+Upload CSVs, run SQL on DuckDB, and visualize query execution plans through a Rust + React interface.
 
 ## What It Does
 
@@ -18,7 +18,7 @@ Argus lets you:
 
 ## Project Structure
 
-- `backend/` - FastAPI server, DuckDB connection, and API routers.
+- `backend/` - Rust backend built with Axum, DuckDB, and API routes.
 - `frontend/` - Vite + React TypeScript UI for upload, querying, and plan visualization.
 - `employees.csv` - Sample dataset for quick testing.
 
@@ -26,10 +26,12 @@ Argus lets you:
 
 Backend:
 
-- Python 3.11+
-- FastAPI
-- DuckDB (in-memory)
-- Uvicorn
+- Rust 2021 Edition
+- Axum
+- Tokio
+- DuckDB
+- Serde
+- UUID
 
 Frontend:
 
@@ -65,16 +67,13 @@ cd Argus
 ### 2. Start the backend
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install fastapi uvicorn duckdb==0.9.2 python-multipart
-uvicorn backend.main:app --reload
+cd backend
+cargo run
 ```
 
 Backend runs at:
 
-- `http://127.0.0.1:8000`
-- Swagger docs: `http://127.0.0.1:8000/docs`
+- http://127.0.0.1:8000
 
 ### 3. Start the frontend
 
@@ -184,12 +183,16 @@ pip install --upgrade fastapi uvicorn duckdb==0.9.2 python-multipart
 
 ## Development Notes
 
-- Backend entrypoint: `backend/main.py`
-- DuckDB connection: `backend/duckdb_engine.py`
-- Plan parser route: `backend/routers/plan.py`
-- SQL execution route: `backend/routers/sql.py`
+- Backend entrypoint: backend/src/main.rs
+- DuckDB connection and API implementation live within the Rust backend source.
+- Plan parsing endpoint: Rust Axum route implementation.
+- SQL execution endpoint: Rust Axum route implementation.
 - Main frontend page: `frontend/src/App.tsx`
 - Plan graph component: `frontend/src/components/PlanGraph.tsx`
+
+### Python Compatibility
+
+The repository still contains the original Python backend implementation used during early development. The Rust backend is the actively maintained implementation and provides the same core functionality with improved performance and deployment characteristics.
 
 ## Future Improvements
 
