@@ -20,7 +20,7 @@ export default function QueryPlanPage() {
 
   return (
     <div style={{ padding: 20 }}>
-      <h1>AetherQuery — Plan Visualizer</h1>
+      <h1>Argus — Plan Visualizer</h1>
 
       <textarea
         placeholder="Enter SQL query..."
